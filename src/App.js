@@ -3,11 +3,48 @@ import ApolloClient from 'apollo-boost';
 import { ApolloProvider } from 'react-apollo';
 
 import Recipes from './Recipes';
+import AddRecipe from './AddRecipe';
 
 import './App.css';
 
+const resolvers = {
+  Recipe: {
+    isStarred: parent => {
+      const starredRecipes =
+      JSON.parse(localStorage.getItem('starredRecipes')) || [];
+
+      return starredRecipes.includes(parent.id);
+    }
+  },
+  Mutation: {
+    updateRecipeStarred: (_, variables) => {
+      const starredRecipes =
+        JSON.parse(localStorage.getItem('starredRecipes')) || [];
+
+      if (variables.isStarred)
+        localStorage.setItem(
+          'starredRecipes',
+          JSON.stringify(starredRecipes.concat([variables.id]))
+        );
+      else
+        localStorage.setItem(
+          'starredRecipes',
+          JSON.stringify(recipeId => recipeId !== variables.id)
+        );
+
+      return {
+        __typename: 'Recipe',
+        isStarred: variables.isStarred
+      }
+    }
+  }
+}
+
 const client = new ApolloClient({
-  uri: 'http://localhost:4000/'
+  uri: 'http://localhost:4000/',
+  clientState: {
+    resolvers
+  }
 });
 
 
@@ -15,7 +52,8 @@ const client = new ApolloClient({
 function App() {
   return (
     <ApolloProvider client={client}>
-      <Recipes />
+      <AddRecipe/>
+      <Recipes/>
     </ApolloProvider>
   );
 }
